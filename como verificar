@@ -1,0 +1,107 @@
+1. Verificar permisos en la base de datos
+Abre la consola de administración de Django:
+
+python manage.py shell
+
+Ejecuta el siguiente código para listar los permisos existentes relacionados con el modelo Mensaje:
+
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from mensajes.models import Mensaje
+
+content_type = ContentType.objects.get_for_model(Mensaje)
+permisos = Permission.objects.filter(content_type=content_type)
+
+for permiso in permisos:
+    print(f"{permiso.codename}: {permiso.name}")
+Salida esperada: Debes ver algo como:
+
+crear_perm: Puede crear mensajes
+ver_perm: Puede ver mensajes
+borrar_perm: Puede borrar mensajes
+
+2. Verificar grupos y sus permisos
+En la consola, lista los grupos y verifica sus permisos:
+
+
+from django.contrib.auth.models import Group
+
+# Listar grupos
+grupos = Group.objects.all()
+for grupo in grupos:
+    print(f"Grupo: {grupo.name}")
+    for permiso in grupo.permissions.all():
+        print(f" - {permiso.codename}: {permiso.name}")
+Salida esperada: Debe mostrar:
+
+
+Grupo: Creador
+ - crear_perm: Puede crear mensajes
+Grupo: Editor
+ - ver_perm: Puede ver mensajes
+ - borrar_perm: Puede borrar mensajes
+Grupo: Administrador
+ - crear_perm: Puede crear mensajes
+ - ver_perm: Puede ver mensajes
+ - borrar_perm: Puede borrar mensajes
+
+3. Verificar usuarios y grupos asignados
+Asegúrate de que los usuarios estén en los grupos correspondientes:
+
+
+from django.contrib.auth.models import User
+
+# Listar usuarios y sus grupos
+usuarios = User.objects.all()
+for usuario in usuarios:
+    print(f"Usuario: {usuario.username}")
+    for grupo in usuario.groups.all():
+        print(f" - Grupo: {grupo.name}")
+Salida esperada: Debes ver algo como:
+
+
+Usuario: creador
+ - Grupo: Creador
+Usuario: editor
+ - Grupo: Editor
+Usuario: administrador
+ - Grupo: Administrador
+
+4. Probar permisos en vistas
+
+Inicia sesión en la interfaz web con cada usuario y verifica que los permisos se comporten como deberían:
+
+  Usuario creador:
+  Debe poder:
+  Crear mensajes.
+  No debe poder:
+  Ver o eliminar mensajes.
+  Usuario editor:
+  Debe poder:
+  Ver mensajes recibidos.
+  Eliminar mensajes.
+  No debe poder:
+  Crear mensajes.
+  Usuario administrador:
+  Debe poder:
+  Crear mensajes.
+  Ver mensajes recibidos.
+  Eliminar mensajes.
+  
+5. Corregir errores si algo no funciona
+Si algo no está configurado correctamente:
+
+Agregar un permiso faltante a un grupo:
+
+from django.contrib.auth.models import Group, Permission
+grupo = Group.objects.get(name='Creador')
+permiso = Permission.objects.get(codename='crear_perm')
+grupo.permissions.add(permiso)
+Asignar un usuario a un grupo:
+
+
+usuario = User.objects.get(username='creador')
+grupo = Group.objects.get(name='Creador')
+usuario.groups.add(grupo)
+  
+Ejecuta nuevamente las pruebas para confirmar que todo funcione.
